@@ -16,6 +16,12 @@ const tweetSchema = new mongoose.Schema({
             type: mongoose.Schema.ObjectId,
             ref: 'Comment',
         }
+    ],
+    comments: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Comment'
+        }
     ]
    
     
