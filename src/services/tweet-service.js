@@ -15,7 +15,7 @@ class TweetService{
         let alreadyPresentTags=await this.hashtagRepository.findByName(tags)
         let titleOfPresentTags=alreadyPresentTags.map(tags=>tags.title); //Returns the tags that are already present in the array
         let newTags=tags.filter(tag=>!titleOfPresentTags.includes(tag));   //Returns the tags that not are already present in the array
-        newTags=newTags.map(tag=>{
+        newTags=newTags.map(tag=>{ 
             return {title:tag, tweets: [tweet.id]}
         });
         await this.hashtagRepository.bulkCreate(newTags);
