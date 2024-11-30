@@ -1,4 +1,6 @@
 import { trusted } from "mongoose";
+import Tweet from "../models/tweet.js";
+
 
 class CrudRepository {
     constructor(model){
@@ -35,7 +37,7 @@ class CrudRepository {
         }
     }
 
-    async getAll(id){
+    async getAll(){
         try {
             const result= await this.model.find({});
             return result;
