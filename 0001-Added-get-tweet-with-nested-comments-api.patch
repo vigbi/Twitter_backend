@@ -1,0 +1,255 @@
+From a2b39948913d1577f6894214ba64c18ddd5065cf Mon Sep 17 00:00:00 2001
+From: Sanket Singh <singhsanket143@gmail.com>
+Date: Tue, 31 Jan 2023 19:33:40 +0530
+Subject: [PATCH] Added get tweet with nested comments api
+
+---
+ src/controllers/comment-controller.js | 23 +++++++++++++++++++
+ src/controllers/tweet-controller.js   | 19 ++++++++++++++++
+ src/models/comment.js                 | 10 +++++++--
+ src/models/tweet.js                   |  6 +++++
+ src/repository/comment-repository.js  |  9 ++++++++
+ src/repository/index.js               |  4 +++-
+ src/repository/tweet-repository.js    |  7 +++++-
+ src/routes/v1/index.js                |  8 +++++--
+ src/services/comment-service.js       | 32 +++++++++++++++++++++++++++
+ src/services/tweet-service.js         |  5 +++++
+ 10 files changed, 117 insertions(+), 6 deletions(-)
+ create mode 100644 src/controllers/comment-controller.js
+ create mode 100644 src/repository/comment-repository.js
+ create mode 100644 src/services/comment-service.js
+
+diff --git a/src/controllers/comment-controller.js b/src/controllers/comment-controller.js
+new file mode 100644
+index 0000000..2c83bf6
+--- /dev/null
++++ b/src/controllers/comment-controller.js
+@@ -0,0 +1,23 @@
++import CommentService from "../services/comment-service.js";
++
++const commentService = new CommentService();
++
++export const createComment = async (req, res) => {
++    try {
++        const response = await commentService.create(req.query.modelId, req.query.modelType, req.body.userId, req.body.content);
++        return res.status(201).json({
++            success: true,
++            message: 'Successfully created a new comment',
++            data: response,
++            err: {}
++        });
++    } catch (error) {
++        return res.status(500).json({
++            success: false,
++            message: 'something went wrong',
++            data: {},
++            err: error
++        });
++    }
++}
++
+diff --git a/src/controllers/tweet-controller.js b/src/controllers/tweet-controller.js
+index f255ad1..fd8aa4b 100644
+--- a/src/controllers/tweet-controller.js
++++ b/src/controllers/tweet-controller.js
+@@ -21,3 +21,22 @@ export const createTweet = async (req, res) => {
+     }
+ }
+ 
++export const getTweet = async (req, res) => {
++    try {
++        const response = await tweetService.get(req.params.id);
++        return res.status(200).json({
++            success: true,
++            message: 'Successfully fetched a tweet',
++            data: response,
++            err: {}
++        });
++    } catch (error) {
++        return res.status(500).json({
++            success: false,
++            message: 'something went wrong',
++            data: {},
++            err: error
++        });
++    }
++}
++
+diff --git a/src/models/comment.js b/src/models/comment.js
+index c14c777..dafdcde 100644
+--- a/src/models/comment.js
++++ b/src/models/comment.js
+@@ -6,7 +6,7 @@ const commentSchema = new mongoose.Schema({
+         required: true,
+     },
+     userId: {
+-        ype: mongoose.Schema.Types.ObjectId,
++        type: mongoose.Schema.Types.ObjectId,
+         ref: 'User',
+         required: true
+     },
+@@ -19,7 +19,13 @@ const commentSchema = new mongoose.Schema({
+         type: mongoose.Schema.Types.ObjectId,
+         required: true,
+         refPath: 'onModel'
+-    }
++    },
++    comments: [
++        {
++            type: mongoose.Schema.Types.ObjectId,
++            ref: 'Comment',
++        }
++    ]
+ }, {timestamps: true});
+ 
+ const Comment = mongoose.model('Comment', commentSchema);
+diff --git a/src/models/tweet.js b/src/models/tweet.js
+index abba724..217c27b 100644
+--- a/src/models/tweet.js
++++ b/src/models/tweet.js
+@@ -10,6 +10,12 @@ const tweetSchema = new mongoose.Schema({
+             type: mongoose.Schema.Types.ObjectId,
+             ref: 'Like'
+         }
++    ],
++    comments: [
++        {
++            type: mongoose.Schema.Types.ObjectId,
++            ref: 'Comment'
++        }
+     ]
+ }, {timestamps: true});
+ 
+diff --git a/src/repository/comment-repository.js b/src/repository/comment-repository.js
+new file mode 100644
+index 0000000..da12323
+--- /dev/null
++++ b/src/repository/comment-repository.js
+@@ -0,0 +1,9 @@
++import CrudRepository from "./crud-repository.js";
++import Comment from '../models/comment.js';
++class CommentRepository extends CrudRepository {
++    constructor() {
++        super(Comment);
++    }
++}
++
++export default CommentRepository;
+\ No newline at end of file
+diff --git a/src/repository/index.js b/src/repository/index.js
+index 38bebc0..6c4b929 100644
+--- a/src/repository/index.js
++++ b/src/repository/index.js
+@@ -2,9 +2,11 @@ import TweetRepository from './tweet-repository.js'
+ import HashtagRepository from './hashtag-repository.js'
+ import LikeRespository from './like-repository.js'
+ import UserRespository from './user-repository.js'
++import CommentRepository from './comment-repository.js'
+ export {
+     TweetRepository,
+     HashtagRepository,
+     LikeRespository,
+-    UserRespository
++    UserRespository,
++    CommentRepository
+ }
+\ No newline at end of file
+diff --git a/src/repository/tweet-repository.js b/src/repository/tweet-repository.js
+index 4b18dbd..f330f91 100644
+--- a/src/repository/tweet-repository.js
++++ b/src/repository/tweet-repository.js
+@@ -17,7 +17,12 @@ class TweetRepository extends CrudRepository {
+ 
+     async getWithComments(id) {
+         try {
+-            const tweet = await Tweet.findById(id).populate({path: 'comments'}).lean();
++            const tweet = await Tweet.findById(id).populate({
++                path: 'comments',
++                populate: {
++                    path: 'comments'
++                }
++            }).lean();
+             return tweet;
+         } catch (error) {
+             console.log(error);
+diff --git a/src/routes/v1/index.js b/src/routes/v1/index.js
+index f16fc88..a4e7cd6 100644
+--- a/src/routes/v1/index.js
++++ b/src/routes/v1/index.js
+@@ -1,13 +1,17 @@
+ import express from 'express';
+ 
+-import { createTweet } from '../../controllers/tweet-controller.js';
++import { createTweet, getTweet } from '../../controllers/tweet-controller.js';
+ import { toggleLike } from '../../controllers/like-controller.js';
++import { createComment } from '../../controllers/comment-controller.js';
+ 
+ const router = express.Router();
+ 
+ router.post('/tweets', createTweet);
+-
++router.get('/tweets/:id', getTweet);
+ 
+ router.post('/likes/toggle',toggleLike);
+ 
++
++router.post('/comments', createComment);
++
+ export default router;
+diff --git a/src/services/comment-service.js b/src/services/comment-service.js
+new file mode 100644
+index 0000000..db86af3
+--- /dev/null
++++ b/src/services/comment-service.js
+@@ -0,0 +1,32 @@
++import { CommentRepository, TweetRepository } from "../repository/index.js";
++
++class CommentService {
++    constructor() {
++        this.commentRepository = new CommentRepository();
++        this.tweetRepository = new TweetRepository();
++    }
++
++    async create(modelId, modelType, userId, content) {
++        if(modelType == 'Tweet') {
++            console.log("inside model type")
++            var commentable = await this.tweetRepository.get(modelId);
++        } else if(modelType == 'Comment') {
++            var commentable = await this.commentRepository.get(modelId);
++        } else {
++            throw new Error('unknown model type');
++        }
++        const comment = await this.commentRepository.create({
++            content: content,
++            userId: userId,
++            onModel: modelType,
++            commentable: modelId,
++            comments: []
++        });
++        commentable.comments.push(comment);
++        await commentable.save();
++
++        return comment;
++    }
++}
++
++export default CommentService;
+diff --git a/src/services/tweet-service.js b/src/services/tweet-service.js
+index b00953b..587c77f 100644
+--- a/src/services/tweet-service.js
++++ b/src/services/tweet-service.js
+@@ -24,6 +24,11 @@ class TweetService {
+         });
+         return tweet;
+     }
++
++    async get(tweetId) {
++        const tweet = await this.tweetRepository.getWithComments(tweetId);
++        return tweet;
++    }
+ }
+ 
+ export default TweetService;
+-- 
+2.43.0.windows.1
+
