@@ -1,40 +1,27 @@
-import {TweetRepository,HashtagRepository} from '../repository/index.js'
+import { TweetRepository, HashtagRepository } from '../repository/index.js'
 
-class TweetService{
+class TweetService {
     constructor() {
-        this.tweetRepository=new TweetRepository();
-        this.hashtagRepository=new HashtagRepository();
+        this.tweetRepository = new TweetRepository();
+        this.hashtagRepository = new HashtagRepository();
     }
 
-    async create(data){
-        const content=data.content;
-        let tags= content.match(/#[a-zA-Z0-9_]+/g);
-        tags= tags.map((tag)=>tag.substring(1)).map(tag=>tag.toLowerCase());
-        
-        console.log(tags);
-
-        const tweet=await  this.tweetRepository.create(data);
-        let alreadyPresentTags=await this.hashtagRepository.findByName(tags)
-        let titleOfPresentTags=alreadyPresentTags.map(tags=>tags.title); //Returns the tags that are already present in the array
-        let newTags=tags.filter(tag=>!titleOfPresentTags.includes(tag));   //Returns the tags that not are already present in the array
-        
-        newTags=newTags.map(tag=>{ 
-            return {title:tag, tweets: [tweet.id]}
+    async create(data) {
+        const content = data.content;
+        const tags = content.match(/#[a-zA-Z0-9_]+/g)
+                        .map((tag) => tag.substring(1).toLowerCase()); // this regex extracts hashtags
+        const tweet = await this.tweetRepository.create(data);
+        let alreadyPresentTags = await this.hashtagRepository.findByName(tags);
+        let titleOfPresenttags = alreadyPresentTags.map(tags => tags.title);
+        let newTags = tags.filter(tag => !titleOfPresenttags.includes(tag));
+        newTags = newTags.map(tag => {
+            return {title: tag, tweets: [tweet.id]}
         });
-
         await this.hashtagRepository.bulkCreate(newTags);
-        alreadyPresentTags.forEach((tag)=>{
+        alreadyPresentTags.forEach((tag) => {
             tag.tweets.push(tweet.id);
             tag.save();
         });
-
-        
-        return tweet; 
-
-    }  
-
-    async get(tweetId){
-        const tweet = await this.tweetRepository.getWithComments(tweetId);
         return tweet;
     }
 
@@ -44,4 +31,5 @@ class TweetService{
     }
 }
 
-export default TweetService; 
+export default TweetService;
+

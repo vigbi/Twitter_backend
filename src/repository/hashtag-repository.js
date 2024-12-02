@@ -9,6 +9,16 @@ class HashtagRepository {
             console.log(error);
         }
     }
+
+    async bulkCreate(data) {
+        try {
+            const tags = await Hashtag.insertMany(data);
+            return tags;
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
     async get(id) {
         try {
             const tag = await Hashtag.findById(id);
@@ -18,15 +28,6 @@ class HashtagRepository {
         }
     }
 
-    async bulkCreate(data){
-        try {
-            const tags= await Hashtag.insertMany(data);
-            return tags;
-        } catch (error) {
-            console.log(error);
-        }
-    }
-    
     async destroy(id) {
         try {
             const response = await Hashtag.findByIdAndRemove(id);
@@ -36,9 +37,9 @@ class HashtagRepository {
         }
     }
 
-    async findByName(titleList){
+    async findByName(titleList) {
         try {
-            const tags= await Hashtag.find({
+            const tags = await Hashtag.find({
                 title: titleList
             });
             return tags;
@@ -46,6 +47,6 @@ class HashtagRepository {
             console.log(error);
         }
     }
-    
 }
-export default HashtagRepository; 
+
+export default HashtagRepository;

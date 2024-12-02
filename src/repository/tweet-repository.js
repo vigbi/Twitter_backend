@@ -1,9 +1,9 @@
-import Tweet from '../models/tweet.js';
+import Tweet from '../models/tweet.js'
 import CrudRepository from './crud-repository.js';
-class TweetRepository extends CrudRepository {
 
-    constructor(){
-        super(Tweet) ;
+class TweetRepository extends CrudRepository {
+    constructor() {
+        super(Tweet);
     }
     
     async create(data) {
@@ -14,7 +14,7 @@ class TweetRepository extends CrudRepository {
             console.log(error);
         }
     }
-    
+
     async getWithComments(id) {
         try {
             const tweet = await Tweet.findById(id).populate({
@@ -28,15 +28,7 @@ class TweetRepository extends CrudRepository {
             console.log(error);
         }
     }
-    async update(tweetId, data) {
-        try {
-            const tweet = await Tweet.findByIdAndUpdate(tweetId, data, {new: true});
-            return tweet;
-        } catch (error) {
-            console.log(error);
-        }
-    }
-    
+
     async getAll(offset, limit) {
         try {
             const tweet = await Tweet.find().skip(offset).limit(limit);
@@ -55,4 +47,5 @@ class TweetRepository extends CrudRepository {
         }
     }
 }
+
 export default TweetRepository;

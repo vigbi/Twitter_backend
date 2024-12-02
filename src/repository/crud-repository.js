@@ -1,62 +1,59 @@
-import { trusted } from "mongoose";
 import Tweet from "../models/tweet.js";
-
-
 class CrudRepository {
-    constructor(model){
-        this.model=model;
+    constructor(model) {
+        this.model = model;
     }
 
     async create(data) {
         try {
-            const result= await this.model.create(data);
+            const result = await this.model.create(data);
             return result;
         } catch (error) {
-            console.log('Something is wrong in CRUD repo.');
+            console.log("Something went wrong in crud repo");
             throw error;
         }
     }
 
-    async destroy (id){
+    async destroy(id) {
         try {
-            const result= await this.model.findByIdAndDelete(id);
+            const result = await this.model.findByIdAndDelete(id);
             return result;
         } catch (error) {
-            console.log('Something is wrong in CRUD repo.');
+            console.log("Something went wrong in crud repo");
             throw error;
         }
     }
 
-    async get(id){
+    async get(id) {
         try {
-            const result= await this.model.findById(id);
+            const result = await this.model.findById(id);
             return result;
         } catch (error) {
-            console.log('Something is wrong in CRUD repo.');
+            console.log("Something went wrong in crud repo");
             throw error;
         }
     }
 
-    async getAll(){
+    async getAll() {
         try {
-            const result= await this.model.find({});
+            const result = await this.model.find({});
             return result;
         } catch (error) {
-            console.log('Something is wrong in CRUD repo.');
+            console.log("Something went wrong in crud repo");
             throw error;
         }
     }
 
-    async update(id){
+    async update(id, data) {
         try {
-            const result= await this.model.findByIdAndUpdate(id,data,{new:true});
+            const result = await this.model.findByIdAndUpdate(id, data, {new: true});
             return result;
-        } catch (error) {
-            console.log('Something is wrong in CRUD repo.');
+        } catch(error) {
+            console.log("Something went wrong in crud repo");
             throw error;
         }
     }
+
 }
-
 
 export default CrudRepository;
